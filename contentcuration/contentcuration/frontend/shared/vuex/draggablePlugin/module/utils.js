@@ -1,6 +1,7 @@
 import isMatch from 'lodash/isMatch';
 import { DraggableFlags } from './constants';
 import { DraggableSearchOrder, DraggableTypes } from 'shared/mixins/draggable/constants';
+import { CLIENTID } from 'shared/data/db';
 
 /**
  * Helper with getters to grab different draggable ancestor types based
@@ -43,6 +44,72 @@ export class DraggableIdentityHelper {
 
   get item() {
     return this.findClosestAncestor({ type: DraggableTypes.ITEM });
+  }
+}
+
+export class DragEventHelper {
+  /**
+   * @param {DragEvent} event
+   * @param {Object} [data]
+   */
+  constructor(event, data = null) {
+    this.event = event;
+    this.data = data;
+    this.identity = null;
+    this.clientId = null;
+    this.effectAllowed = null;
+  }
+
+  /**
+   * @param {DragEvent} e
+   * @return {DragEventHelper}
+   */
+  static fromEvent(e) {
+    const helper = new DragEventHelper(e);
+    if (helper.isDraggable) {
+      const { clientId, identity, effectAllowed } = JSON.parse(e.dataTransfer.getData('draggable'));
+      helper.clientId = clientId;
+      helper.identity = identity;
+      helper.effectAllowed = effectAllowed;
+    }
+    return helper;
+  }
+
+  /**
+   * @param {DragEvent} e
+   * @param {DraggableIdentity} identity
+   * @param {String} effectAllowed
+   * @return {DragEventHelper}
+   */
+  static initEvent(e, identity, effectAllowed) {
+    // Set draggable image to transparent 1x1 pixel image, overriding default browser behavior
+    // that generates a static PNG from the element
+    const dragImage = new Image();
+    dragImage.src =
+      'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8Xw8AAoMBgDTD2qgAAAAASUVORK5CYII=';
+    e.dataTransfer.setDragImage(dragImage, 1, 1);
+    e.dataTransfer.effectAllowed = effectAllowed;
+    e.dataTransfer.setData(
+      'draggable',
+      JSON.stringify({
+        clientId: CLIENTID,
+        identity,
+        effectAllowed,
+      })
+    );
+
+    const helper = new DragEventHelper(e);
+    helper.clientId = CLIENTID;
+    helper.identity = identity;
+    return helper;
+  }
+
+  get isDraggable() {
+    return this.event.dataTransfer && this.event.dataTransfer.types.find(t => t === 'draggable');
+  }
+
+  get fromAnotherClient() {
+    return this.clientId !== CLIENTID;
   }
 }
 

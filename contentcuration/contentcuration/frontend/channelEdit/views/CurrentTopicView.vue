@@ -496,9 +496,19 @@
 
         // All sources should be from the same region
         const { region: sourceRegion } = new DraggableIdentityHelper(data.sources[0]);
-        return sourceRegion && sourceRegion.id === DraggableRegions.CLIPBOARD
-          ? this.copyContentNodes(payload)
-          : this.moveContentNodes(payload);
+        if (
+          (sourceRegion && sourceRegion.id === DraggableRegions.CLIPBOARD) ||
+          drop.fromAnotherClient
+        ) {
+          return this.copyContentNodes(payload).then(() => {
+            // When dropping from another client, it doesn't update immediately
+            if (drop.fromAnotherClient) {
+              this.$forceUpdate();
+            }
+          });
+        }
+
+        return this.moveContentNodes(payload);
       },
       insertPosition(mask) {
         return mask & DraggableFlags.TOP

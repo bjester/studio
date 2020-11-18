@@ -3,6 +3,7 @@ import baseMixin from './base';
 import { objectValuesValidator } from './utils';
 import { DraggableTypes, EffectAllowed } from './constants';
 import { animationThrottle, extendSlot } from 'shared/utils/helpers';
+import { DragEventHelper } from 'shared/vuex/draggablePlugin/module/utils';
 
 export default {
   mixins: [baseMixin],
@@ -68,14 +69,7 @@ export default {
         return;
       }
 
-      // Set draggable image to transparent 1x1 pixel image, overriding default browser behavior
-      // that generates a static PNG from the element
-      const dragImage = new Image();
-      dragImage.src =
-        'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8Xw8AAoMBgDTD2qgAAAAASUVORK5CYII=';
-      e.dataTransfer.setDragImage(dragImage, 1, 1);
-      e.dataTransfer.setData('draggableIdentity', JSON.stringify(this.draggableIdentity));
-      e.dataTransfer.effectAllowed = this.effectAllowed;
+      DragEventHelper.initEvent(e, this.draggableIdentity, this.effectAllowed);
 
       const { clientX, clientY } = e;
       this.throttledUpdateDraggableDirection.cancel();

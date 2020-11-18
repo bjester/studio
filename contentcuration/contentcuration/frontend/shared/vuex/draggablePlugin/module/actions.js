@@ -106,6 +106,7 @@ export function resetDraggableDirection(context) {
  *
  * @param context
  * @param identity
+ * @param [sources]
  * @return {{
  *  sources: DraggableIdentity[],
  *  identity: DraggableIdentity,
@@ -117,14 +118,17 @@ export function resetDraggableDirection(context) {
  *    relative: Number
  *  }}|null}
  */
-export function setDraggableDropped(context, identity) {
+export function setDraggableDropped(context, { identity, sources = [] }) {
   // In the future, we could add handles to other types like collections and regions,
   // which this would support
-  const source = context.getters.deepestActiveDraggable;
+  if (context.getters.deepestActiveDraggable) {
+    sources.push(cloneDeep(context.getters.deepestActiveDraggable));
+  }
   const destination = new DraggableIdentityHelper(identity);
 
   // Can't drop on ourselves
-  if (!source || destination.is(source)) {
+  sources = sources.filter(source => !destination.is(source));
+  if (!sources.length) {
     return null;
   }
 
@@ -139,7 +143,6 @@ export function setDraggableDropped(context, identity) {
   }
 
   // We can add grouped handles to this sources array
-  const sources = [source].map(cloneDeep);
   const { hoverDraggableSection, hoverDraggableTarget } = context.rootState.draggable[
     `${identity.type}s`
   ];

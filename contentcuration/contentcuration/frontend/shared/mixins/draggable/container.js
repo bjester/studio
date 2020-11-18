@@ -1,7 +1,7 @@
 import { mapActions, mapGetters } from 'vuex';
 import debounce from 'lodash/debounce';
 import baseMixin from './base';
-import { DropEventHelper, objectValuesValidator } from './utils';
+import { objectValuesValidator } from './utils';
 import { DraggableFlags } from 'shared/vuex/draggablePlugin/module/constants';
 import { animationThrottle, extendSlot } from 'shared/utils/helpers';
 import {
@@ -10,6 +10,7 @@ import {
   DropEffect,
   DragEffect,
 } from 'shared/mixins/draggable/constants';
+import { DragEventHelper } from 'shared/vuex/draggablePlugin/module/utils';
 
 export default {
   mixins: [baseMixin],
@@ -269,17 +270,26 @@ export default {
     },
     emitDraggableDrop(e) {
       e.preventDefault();
-      if (!this.draggableDragEntered || !this.isDropAllowed) {
+      const drop = DragEventHelper.fromEvent(e);
+      const otherSources = [];
+
+      // Ah we've dragged from another window!
+      if (drop.isDraggable && drop.fromAnotherClient) {
+        this.setHoverDraggable(this.draggableIdentity);
+        this.emitDraggableDragOver(e);
+        this.throttledUpdateHoverDraggable.flush();
+        otherSources.push(drop.identity);
+      } else if (!this.draggableDragEntered || !this.isDropAllowed) {
         if (this.draggableDragEntered) {
           this.emitDraggableDragLeave(e);
         }
         return;
       }
 
-      this.setDraggableDropped(this.draggableIdentity)
+      this.setDraggableDropped({ identity: this.draggableIdentity, sources: otherSources })
         .then(data => {
           if (data) {
-            const drop = new DropEventHelper(data, e);
+            drop.data = data;
             this.$emit('draggableDrop', drop);
           }
         })
