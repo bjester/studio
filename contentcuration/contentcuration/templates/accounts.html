@@ -1,4 +1,3 @@
-<!DOCTYPE HTML>
 {% extends "base.html" %}
 {% load staticfiles %}
 {% load i18n %}
@@ -6,9 +5,19 @@
 {% load render_bundle from webpack_loader %}
 
 {% block css_bundle %}
-	{% render_bundle_css 'accounts' %}
+  {% render_bundle_css 'accounts' %}
 {% endblock css_bundle %}
 
 {% block js_bundle %}
-	{% render_bundle 'accounts' 'js' %}
+  {% render_bundle 'accounts' 'js' %}
 {% endblock js_bundle %}
+
+{% block analytics_data_layer %}
+  {{ block.super }}
+  <script>
+    // Google tag manager data layer https://developers.google.com/tag-manager/devguide
+    dataLayer.push({
+      pageCategory: 'Account',
+    });
+  </script>
+{% endblock analytics_data_layer %}

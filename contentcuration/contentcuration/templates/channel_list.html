@@ -1,4 +1,3 @@
-<!DOCTYPE HTML>
 {% extends "base.html" %}
 {% load staticfiles %}
 {% load i18n %}
@@ -10,29 +9,28 @@
 {% endblock css_bundle %}
 
 {% block title %}
-	{% if LIBRARY_MODE %}{% trans 'Kolibri Content Library Catalog' %}
-	{% else %}{% trans 'Kolibri Studio' %}
-	{% endif %}
+  {% if LIBRARY_MODE %}{% trans 'Kolibri Content Library Catalog' %}
+  {% else %}{% trans 'Kolibri Studio' %}
+  {% endif %}
 {% endblock title %}
 
 {% block analytics_data_layer %}
-<script>
-  // Google tag manager data layer https://developers.google.com/tag-manager/devguide
-  dataLayer.push({
-    pageCategory: 'Channel list',
-    currentUser: window.user,
-  });
-</script>
+  {{ block.super }}
+  <script>
+    // Google tag manager data layer https://developers.google.com/tag-manager/devguide
+    dataLayer.push({
+      pageCategory: 'Channel list',
+    });
+  </script>
 {% endblock analytics_data_layer %}
 
 {% block content %}
-	<script>
-		var libraryMode = "{{ LIBRARY_MODE }}" === "True";
-		var publicLanguages = JSON.parse({{ public_languages | safe }});
-		var publicLicenses = JSON.parse({{ public_licenses | safe }});
-		var publicKinds = JSON.parse({{ public_kinds | safe }});
-		var publicCollections = JSON.parse({{ public_collections | safe }});
-	</script>
-	{% render_bundle 'channel_list' 'js' %}
-
+  <script>
+    var libraryMode = "{{ LIBRARY_MODE }}" === "True";
+    var publicLanguages = JSON.parse({{ public_languages | safe }});
+    var publicLicenses = JSON.parse({{ public_licenses | safe }});
+    var publicKinds = JSON.parse({{ public_kinds | safe }});
+    var publicCollections = JSON.parse({{ public_collections | safe }});
+  </script>
+  {% render_bundle 'channel_list' 'js' %}
 {% endblock content %}

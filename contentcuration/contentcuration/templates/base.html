@@ -1,4 +1,5 @@
 <!DOCTYPE HTML>
+{% spaceless %}
 {% load cache %}
 {% load staticfiles %}
 {% load i18n %}
@@ -9,150 +10,148 @@
 {% get_current_language_bidi as LANGUAGE_BIDI %}
 
 <html dir="{{ LANGUAGE_BIDI|yesno:'rtl,ltr' }}" lang="{{ LANGUAGE_CODE }}">
-    <head>
-        {% block head %}
-        <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
+  <head>
+    {% block head %}
+      <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
 
-        <script>
-            window.DEBUG = "{{DEBUG}}" === "True";
-            window.languageCode = "{{LANGUAGE_CODE}}";
-            window.isRTL = "{{ LANGUAGE_BIDI }}" === "True";
-            {% if i18n_messages %}
-            window.ALL_MESSAGES = JSON.parse({{ i18n_messages | safe }});
-            {% endif %}
-        </script>
-        {% block variables %}
-        {% endblock variables %}
-        {% cache 60 head_cache %}
-        <!--[if lt IE 9]>
-            <script src="{% static "js/html5shiv.js" %}"></script>
-        <![endif] -->
-        <!-- make sure configuring Sentry is one of the very first things we do in order to catch the most errors. -->
+      <script>
+        window.DEBUG = "{{DEBUG}}" === "True";
+        window.languageCode = "{{LANGUAGE_CODE}}";
+        window.isRTL = "{{ LANGUAGE_BIDI }}" === "True";
+        {% if i18n_messages %}
+        window.ALL_MESSAGES = JSON.parse({{ i18n_messages | safe }});
+        {% endif %}
+      </script>
+      {% block variables %}
+      {% endblock variables %}
+      {% cache 60 head_cache %}
+      <!--[if lt IE 9]>
+        <script src="{% static "js/html5shiv.js" %}"></script>
+      <![endif] -->
 
-        <!-- for some reason, load raven commmand doesn't actually load the raven JS library, so do so here
-             TODO: Should we install and bundle this as a dep using yarn?
-        -->
-        {%  if not debug %}
+      {# for some reason, load raven commmand doesn't actually load the raven JS library, so do so here
+           TODO: Should we install and bundle this as a dep using yarn? #}
+      {# make sure configuring Sentry is one of the very first things we do in order to catch the most errors. #}
+      {%  if not debug %}
         <script
           src="https://browser.sentry-cdn.com/5.10.2/bundle.min.js"
           integrity="sha384-ssBfXiBvlVC7bdA/VX03S88B5MwXQWdnpJRbUYFPgswlOBwETwTp6F3SMUNpo9M9"
           crossorigin="anonymous">
         </script>
         <script>
-            // Ignore errors when CloudFlare-AlwaysOnline is in the user agent as these are errors serving
-            // the offline version and I don't think we can fix or reproduce these easily.
-            // Fix taken from here: https://github.com/getsentry/sentry-javascript/issues/617#issuecomment-227562203
-            if (window.Sentry) {
-              Sentry.init({ dsn: 'https://e4b21baeb7a044b885464d2af687fb73@sentry.io/1252819',
-                // onunhandledrejection reports just give us a dump of the Promise.reject object, and we often
-                // get another error report with more useful data anyway, so ignore these for now.
-                // They are most commonly triggered by a 500 response from an API endpoint call.
-                integrations: [new Sentry.Integrations.GlobalHandlers({ onerror: true, onunhandledrejection: false})],
-                beforeSend: function(event) {
-                  var isCloudFlare = /^(.*CloudFlare-AlwaysOnline.*)$/.test(window.navigator.userAgent);
-                  if (isCloudFlare) {
-                      return null;
-                  }
+          // Ignore errors when CloudFlare-AlwaysOnline is in the user agent as these are errors serving
+          // the offline version and I don't think we can fix or reproduce these easily.
+          // Fix taken from here: https://github.com/getsentry/sentry-javascript/issues/617#issuecomment-227562203
+          if (window.Sentry) {
+            Sentry.init({ dsn: 'https://e4b21baeb7a044b885464d2af687fb73@sentry.io/1252819',
+              // onunhandledrejection reports just give us a dump of the Promise.reject object, and we often
+              // get another error report with more useful data anyway, so ignore these for now.
+              // They are most commonly triggered by a 500 response from an API endpoint call.
+              integrations: [new Sentry.Integrations.GlobalHandlers({ onerror: true, onunhandledrejection: false})],
+              beforeSend: function(event) {
+                var isCloudFlare = /^(.*CloudFlare-AlwaysOnline.*)$/.test(window.navigator.userAgent);
+                if (isCloudFlare) {
+                    return null;
+                }
 
-                  return event;
-                },
-                // If there are errors that are known bugs in third-party libs or are clearly harmless,
-                // add them here to reduce sentry noise.
-                ignoreErrors: [
-                  // These appear to be errors in Summernote, but we have yet to reproduce. Although we get a lot
-                  // of Sentry reports with these errors, they lack a stack trace, and we also have not yet gotten
-                  // any user reports of this problem. For the moment, silence them so that they don't drown out
-                  // other errors. We may wish to remove these once we resolve the other errors.
-                  'IndexSizeError: Failed to execute \'setStart\' on \'Range\'',
-                  'IndexSizeError: Failed to execute \'setEnd\' on \'Range\'',
-                  'IndexSizeError: Index or size is negative or greater than the allowed amount',
-                ]
-              });
-            }
+                return event;
+              },
+              // If there are errors that are known bugs in third-party libs or are clearly harmless,
+              // add them here to reduce sentry noise.
+              ignoreErrors: [
+                // These appear to be errors in Summernote, but we have yet to reproduce. Although we get a lot
+                // of Sentry reports with these errors, they lack a stack trace, and we also have not yet gotten
+                // any user reports of this problem. For the moment, silence them so that they don't drown out
+                // other errors. We may wish to remove these once we resolve the other errors.
+                'IndexSizeError: Failed to execute \'setStart\' on \'Range\'',
+                'IndexSizeError: Failed to execute \'setEnd\' on \'Range\'',
+                'IndexSizeError: Index or size is negative or greater than the allowed amount',
+              ]
+            });
+          }
         </script>
-        {% endif %}
-        <link rel="shortcut icon" href="{% static 'img/logo.ico' %}">
+      {% endif %}
+      <link rel="shortcut icon" href="{% static 'img/logo.ico' %}">
 
-        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
+      <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
 
       <title>
         {% block title %}{% trans 'Kolibri Studio' %}{% endblock title %}
       </title>
 
-        <!-- fullstory integration, only on develop until we add an opt-in option. -->
-        {% if request.get_host == 'develop.studio.learningequality.org' %}
+      {# fullstory integration, only on develop until we add an opt-in option #}
+      {% if request.get_host == 'develop.studio.learningequality.org' %}
         <script>
-            window['_fs_debug'] = false;
-            window['_fs_host'] = 'fullstory.com';
-            window['_fs_org'] = 'FCSD3';
-            window['_fs_namespace'] = 'FS';
-            (function(m,n,e,t,l,o,g,y){
-              // eslint-disable-next-line no-console
-                if (e in m) {if(m.console && m.console.log) { m.console.log('FullStory namespace conflict. Please set window["_fs_namespace"].');} return;}
-                g=m[e]=function(a,b){g.q?g.q.push([a,b]):g._api(a,b);};g.q=[];
-                o=n.createElement(t);o.async=1;o.src='https://'+_fs_host+'/s/fs.js';
-                y=n.getElementsByTagName(t)[0];y.parentNode.insertBefore(o,y);
-                g.identify=function(i,v){g(l,{uid:i});if(v)g(l,v)};g.setUserVars=function(v){g(l,v)};g.event=function(i,v,s){g('event',{n:i,p:v,s:s})};
-                g.shutdown=function(){g("rec",!1)};g.restart=function(){g("rec",!0)};
-                g.consent=function(a){g("consent",!arguments.length||a)};
-                g.identifyAccount=function(i,v){o='account';v=v||{};v.acctId=i;g(o,v)};
-                g.clearUserCookie=function(){};
-            })(window,document,window['_fs_namespace'],'script','user');
+          window['_fs_debug'] = false;
+          window['_fs_host'] = 'fullstory.com';
+          window['_fs_org'] = 'FCSD3';
+          window['_fs_namespace'] = 'FS';
+          (function(m,n,e,t,l,o,g,y){
+            // eslint-disable-next-line no-console
+              if (e in m) {if(m.console && m.console.log) { m.console.log('FullStory namespace conflict. Please set window["_fs_namespace"].');} return;}
+              g=m[e]=function(a,b){g.q?g.q.push([a,b]):g._api(a,b);};g.q=[];
+              o=n.createElement(t);o.async=1;o.src='https://'+_fs_host+'/s/fs.js';
+              y=n.getElementsByTagName(t)[0];y.parentNode.insertBefore(o,y);
+              g.identify=function(i,v){g(l,{uid:i});if(v)g(l,v)};g.setUserVars=function(v){g(l,v)};g.event=function(i,v,s){g('event',{n:i,p:v,s:s})};
+              g.shutdown=function(){g("rec",!1)};g.restart=function(){g("rec",!0)};
+              g.consent=function(a){g("consent",!arguments.length||a)};
+              g.identifyAccount=function(i,v){o='account';v=v||{};v.acctId=i;g(o,v)};
+              g.clearUserCookie=function(){};
+          })(window,document,window['_fs_namespace'],'script','user');
         </script>
+      {% endif %}
+      {% endcache %}
+
+      {% block css_bundle %}
+      {% endblock css_bundle %}
+
+      {# Session variables (need to keep outside of cache) #}
+      <script>
+        var user;
+        {% if current_user %}
+        user = JSON.parse({{ current_user | safe }});
         {% endif %}
-        {% endcache %}
+        var user_preferences;
+        {% if user_preferences %}
+        var user_preferences = JSON.parse({{ user_preferences | safe }});
+        {% endif %}
+        var csrftoken = '{{ csrf_token }}';
+        var storageBaseUrl = "{{ STORAGE_HOST }}/{{ STORAGE_BASE_URL }}";
+        {%  if not debug %}
+        if (user && user.id && window.Sentry) {
+          Sentry.setUser({ id: user.id, email: user.email });
+        }
+        {% endif %}
+      </script>
+    {% endblock head %}
 
-        {% block css_bundle %}
-        {% endblock css_bundle %}
+    {% block analytics %}
+      {# Google Tag Manager #}
+      <script>
+        window.dataLayer = [];
+        // Backwards compatible
+        function gtag(){dataLayer.push(arguments);}
 
-        <!-- Session variables (need to keep outside of cache) -->
-        <script>
-          var user;
-          {% if current_user %}
-          user = JSON.parse({{ current_user | safe }});
-          {% endif %}
-          var user_preferences;
-          {% if user_preferences %}
-          var user_preferences = JSON.parse({{ user_preferences | safe }});
-          {% endif %}
-          var csrftoken = '{{ csrf_token }}';
-          var betaMode = "{{ BETA_MODE }}" === "True";
-          var storageBaseUrl = "{{ STORAGE_HOST }}/{{ STORAGE_BASE_URL }}";
-          {%  if not debug %}
-          if (user && user.id && window.Sentry) {
-            Sentry.setUser({ id: user.id, email: user.email });
-          }
-          {% endif %}
-        </script>
-      {% endblock head %}
+        (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+        new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+        j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+        'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+        })(window,document,'script','dataLayer','GTM-M6TP6S5');
+      </script>
+    {% endblock %}
 
-      {% block analytics %}
-        <script>
-          // Backwards compatible
-          function gtag(){dataLayer.push(arguments);}
-        </script>
-        <!-- Google Tag Manager -->
-        <script>
-          window.dataLayer = [];
-          (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-          new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-          j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-          'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-          })(window,document,'script','dataLayer','GTM-M6TP6S5');
-        </script>
-        <!-- End Google Tag Manager -->
-      {% endblock %}
-
-      {% block analytics_data_layer %}
-        <script>
-          // Google tag manager data layer https://developers.google.com/tag-manager/devguide
-          dataLayer.push({
-            currentUser: window.user,
-          });
-        </script>
-      {% endblock analytics_data_layer %}
+    {% block analytics_data_layer %}
+      <script>
+        // Google tag manager data layer https://developers.google.com/tag-manager/devguide
+        dataLayer.push({
+          currentUser: window.user,
+        });
+      </script>
+    {% endblock analytics_data_layer %}
   </head>
+{% endspaceless %}
+
   <body data-app class="application--is-{{ LANGUAGE_BIDI|yesno:'rtl,ltr' }}">
     {% block nav %}
       <!-- Navigation bar -->

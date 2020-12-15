@@ -6,7 +6,10 @@ indent_size = 2
 [*.vue]
 indent_size = 2
 
-[*.{js,vue,py}]
+[*.html]
+indent_size = 2
+
+[*.{js,vue,py,html}]
 indent_style = space
 trim_trailing_whitespace = true
 insert_final_newline = true

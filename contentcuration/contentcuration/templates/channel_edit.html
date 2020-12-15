@@ -1,4 +1,3 @@
-<!DOCTYPE HTML>
 {% extends "base.html" %}
 {% load staticfiles %}
 {% load i18n %}
@@ -18,11 +17,11 @@
 {% endblock js_bundle %}
 
 {% block analytics_data_layer %}
-<script>
-  // Google tag manager data layer https://developers.google.com/tag-manager/devguide
-  dataLayer.push({
-    pageCategory: 'Channel edit',
-    currentUser: window.user,
-  });
-</script>
+  {{ block.super }}
+  <script>
+    // Google tag manager data layer https://developers.google.com/tag-manager/devguide
+    dataLayer.push({
+      pageCategory: 'Channel edit',
+    });
+  </script>
 {% endblock analytics_data_layer %}
