@@ -9,7 +9,13 @@
     </VListTile>
     <VListTile v-if="canEdit" @click.stop="calculateMoveNodes">
       <VListTileTitle>{{ $tr('moveTo') }}</VListTileTitle>
-      <MoveModal v-if="moveModalOpen" ref="moveModal" v-model="moveModalOpen" @target="moveNodes" />
+      <MoveModal
+        v-if="moveModalOpen"
+        ref="moveModal"
+        v-model="moveModalOpen"
+        :topicAndResourceCounts="topicAndResourceCounts"
+        @target="moveNodes"
+      />
     </VListTile>
     <VListTile @click="removeNode()">
       <VListTileTitle>{{ $tr('remove') }}</VListTileTitle>
@@ -45,6 +51,10 @@
         moveModalOpen: false,
         newTrees: [],
         legacyTrees: [],
+        topicAndResourceCounts: {
+          topicCount: 0,
+          resourceCount: 0,
+        },
       };
     },
     computed: {
@@ -78,8 +88,8 @@
         const trees = this.getMoveTrees(this.nodeId, this.ancestorId, true);
 
         this.legacyTrees = trees.legacyTrees;
-
         this.newTrees = trees.newTrees;
+        this.topicAndResourceCounts = trees.stats;
 
         if (this.legacyTrees.length || this.newTrees.length) {
           this.moveModalOpen = true;

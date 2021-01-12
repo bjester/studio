@@ -174,6 +174,10 @@
         type: Boolean,
         default: false,
       },
+      topicAndResourceCounts: {
+        type: Object,
+        default: null,
+      },
     },
     data() {
       return {
@@ -200,7 +204,8 @@
         },
       },
       moveHeader() {
-        return this.$tr('moveItems', this.getTopicAndResourceCounts(this.moveNodeIds));
+        const counts = this.topicAndResourceCounts || this.getTopicAndResourceCounts(this.moveNodeIds);
+        return this.$tr('moveItems', counts);
       },
       currentLocationId() {
         // If opening modal from inside TrashModal, begin navigation at root node

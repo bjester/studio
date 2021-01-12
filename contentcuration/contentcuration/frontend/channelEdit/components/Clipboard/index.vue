@@ -67,6 +67,7 @@
                         v-if="canEdit && moveModalOpen"
                         ref="moveModal"
                         v-model="moveModalOpen"
+                        :topicAndResourceCounts="topicAndResourceCounts"
                         @target="moveNodes"
                       />
                       <IconButton
@@ -192,6 +193,10 @@
         moveModalOpen: false,
         newTrees: [],
         legacyTrees: [],
+        topicAndResourceCounts: {
+          topicCount: 0,
+          resourceCount: 0,
+        },
       };
     },
     computed: {
@@ -329,8 +334,8 @@
         const trees = this.getMoveTrees(this.clipboardRootId);
 
         this.legacyTrees = trees.legacyTrees;
-
         this.newTrees = trees.newTrees;
+        this.topicAndResourceCounts = trees.stats;
 
         if (this.legacyTrees.length || this.newTrees.length) {
           this.moveModalOpen = true;

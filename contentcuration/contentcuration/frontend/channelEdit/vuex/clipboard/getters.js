@@ -469,18 +469,18 @@ export function getCopyTrees(state, getters) {
    * @return {[{ id: Number, deep: Boolean, target: string, children: [] }]}
    */
   return function(rootId, ancestorId = null, ignoreSelection = false) {
-    function recurseForUnselectedIds(id, ancestorId) {
+    function recurseForUnselectedIds(id, ancestorId, callback) {
       const selectionState = getters.getSelectionState(id, ancestorId);
       // Nothing is selected, so return early.
       if (selectionState === SelectionFlags.NONE) {
         const contentNode = getters.getClipboardNodeForRender(id, ancestorId);
-        return [contentNode.node_id];
+        callback(contentNode.node_id, contentNode);
+        return;
       }
-      return flatten(
-        getters
-          .getClipboardChildren(id, ancestorId)
-          .map(c => recurseForUnselectedIds(c.id, ancestorId))
-      );
+
+      getters
+        .getClipboardChildren(id, ancestorId)
+        .map(c => recurseForUnselectedIds(c.id, ancestorId, callback))
     }
 
     function recurseforCopy(id, ancestorId = null) {
@@ -503,32 +503,45 @@ export function getCopyTrees(state, getters) {
         const sourceClipboardNode = state.clipboardNodesMap[id];
         const selectedNode = getters.getClipboardNodeForRender(id, ancestorId);
         const legacy = isLegacyNode(sourceClipboardNode);
+        const isTopic = selectedNode.kind === ContentKindsNames.TOPIC;
         const update = {
           node_id: selectedNode.node_id,
           channel_id: selectedNode.channel_id,
           id: selectedNode.id,
           selectionId: selectionId(id, ancestorId),
           legacy,
+          topicCount: isTopic ? (1 + selectedNode.total_count - selectedNode.resource_count) : 0,
+          resourceCount: isTopic ? selectedNode.resource_count : 1,
         };
         if (children.length) {
           // We have copied the parent as a clipboard node, and the children are content nodes
           // can now switch mode to just return a mask of unselected node_ids
           const excluded_descendants = {};
+          const updateExcluded = (key, sourceNode) => {
+            if (!(key in excluded_descendants)) {
+              const isTopic = sourceNode && sourceNode.kind === ContentKindsNames.TOPIC
+              update.topicCount -= (isTopic
+                ? (selectedNode.total_count - selectedNode.resource_count - 1)
+                : 0);
+              update.resourceCount -= (isTopic
+                ? selectedNode.resource_count
+                : 1);
+            }
+          };
+
           if (sourceClipboardNode && !legacy) {
             for (let key in get(
               sourceClipboardNode,
               ['extra_fields', 'excluded_descendants'],
               {}
             )) {
-              excluded_descendants[key] = true;
+              updateExcluded(key, getters.getClipboardNodeForRender(key, childAncestorId));
             }
           }
           if (!(selectionState & SelectionFlags.ALL_DESCENDANTS) && !ignoreSelection) {
             // Some of the children are not selected, so get the node_ids that aren't selected
             for (let child of children) {
-              for (let key of recurseForUnselectedIds(child.id, childAncestorId)) {
-                excluded_descendants[key] = true;
-              }
+              recurseForUnselectedIds(child.id, childAncestorId, updateExcluded);
             }
           }
           update.extra_fields = {
@@ -547,11 +560,17 @@ export function getCopyTrees(state, getters) {
 export function getMoveTrees(state, getters) {
   return function(rootId, ancestorId = null, ignoreSelection = false) {
     const trees = getters.getCopyTrees(rootId, ancestorId, ignoreSelection);
-
     const [legacyTrees, newTrees] = partition(trees, t => t.legacy);
+    const stats = trees.reduce(({ topicCount = 0, resourceCount = 0}, tree) => {
+      return {
+        topicCount: topicCount + tree.topicCount,
+        resourceCount: resourceCount + tree.resourceCount,
+      };
+    });
     return {
       legacyTrees,
       newTrees,
+      stats,
     };
   };
 }
