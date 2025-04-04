@@ -41,7 +41,7 @@ function makeWrapper(files) {
 
   return mount(FileUpload, {
     store,
-    attachToDocument: true,
+    attachTo: document.body,
     propsData: {
       nodeId: 'testnode',
     },
@@ -51,11 +51,6 @@ function makeWrapper(files) {
       },
       files() {
         return files;
-      },
-    },
-    methods: {
-      updateFile() {
-        return Promise.resolve();
       },
     },
     stubs: {
@@ -95,7 +90,7 @@ describe('fileUpload', () => {
   describe('methods', () => {
     let uploadItem;
     beforeEach(() => {
-      uploadItem = wrapper.findAll(FileUploadItem).at(2);
+      uploadItem = wrapper.findAllComponents(FileUploadItem).at(2);
     });
     it('should automatically select the first file on load', () => {
       expect(wrapper.vm.selected).toBe('file-3');
@@ -104,17 +99,17 @@ describe('fileUpload', () => {
       uploadItem.vm.$emit('selected');
       expect(wrapper.vm.selected).toBe('file-1');
     });
-    it('emitted remove event should trigger delete file', () => {
-      const deleteFile = jest.fn();
+    it('emitted remove event should trigger delete file', async () => {
+      const deleteFile = jest.spyOn(wrapper.vm, 'deleteFile');
       wrapper.setData({ selected: 'file-1' });
-      wrapper.setMethods({ deleteFile });
+      await wrapper.vm.$nextTick();
       uploadItem.vm.$emit('remove', testFiles[0]);
       expect(deleteFile).toHaveBeenCalled();
       expect(deleteFile.mock.calls[0][0]).toBe(testFiles[0]);
     });
-    it('calling uploadCompleteHandler should trigger update file', () => {
-      const updateFile = jest.fn(() => Promise.resolve());
-      wrapper.setMethods({ updateFile });
+    it('calling uploadCompleteHandler should trigger update file', async () => {
+      const updateFile = jest.spyOn(wrapper.vm, 'updateFile');
+      updateFile.mockImplementation(() => Promise.resolve());
       uploadItem.vm.uploadCompleteHandler(testFiles[1]);
       expect(updateFile).toHaveBeenCalled();
       expect(updateFile.mock.calls[0][0]).toEqual({
