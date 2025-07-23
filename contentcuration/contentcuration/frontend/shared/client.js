@@ -1,7 +1,7 @@
 import omit from 'lodash/omit';
 import axios, { isCancel } from 'axios';
 import qs from 'qs';
-import * as Sentry from '@sentry/vue';
+import * as Sentry from '@sentry/browser';
 
 export function paramsSerializer(params) {
   // Do custom querystring stingifying to comma separate array params

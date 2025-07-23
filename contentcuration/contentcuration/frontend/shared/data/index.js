@@ -1,4 +1,4 @@
-import { captureException } from '@sentry/vue';
+import { captureException } from '@sentry/browser';
 import mapValues from 'lodash/mapValues';
 import { CHANGES_TABLE, PAGINATION_TABLE, TABLE_NAMES } from './constants';
 import db from './db';

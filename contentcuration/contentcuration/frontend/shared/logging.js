@@ -1,4 +1,4 @@
-import * as Sentry from '@sentry/vue';
+import * as Sentry from '@sentry/browser';
 
 export default {
   error(error, ...attachments) {

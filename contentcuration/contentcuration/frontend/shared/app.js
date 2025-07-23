@@ -1,6 +1,8 @@
 import 'regenerator-runtime/runtime';
 import { liveQuery } from 'dexie';
-import { init as SentryInit, globalHandlersIntegration } from '@sentry/vue';
+import { init as SentryInit } from '@sentry/vue';
+import { globalHandlersIntegration } from '@sentry/browser';
+
 import Vue from 'vue';
 import VueRouter from 'vue-router';
 import Vuetify, {
